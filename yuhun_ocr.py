@@ -57,9 +57,11 @@ class OCR:
     def __init__(self, img):
         self.image = img
         self.pix = img.load()
+        self.position = 0
         self.name_rect = (829, 197, 969, 231)
         self.bottom_line_rgb = (177, 140, 120)
-        if self.check_yuhun_position():
+        if self.is_yuhun_exist():
+            self.check_yuhun_position()
             bottom_y = self.get_status_bottom()
             if not bottom_y:
                 raise ocrError("cannot find yuhun status bottom line")
@@ -71,17 +73,16 @@ class OCR:
     
     def ocr_text(self, img):
         return image_to_text(img, lang="yys")
-
-    def check_yuhun_position(self):
-        "找御魂的位置"
-        # TODO 先确认是否包含御魂属性界面
+    
+    def is_yuhun_exist(self):
         if self.check_rgb(self.pix[845, 245], (239, 110, 25)) \
             and self.check_rgb(self.pix[845, 240], (113, 82, 68)) \
             and self.check_rgb(self.pix[860, 245], (228, 86, 34)):
-            pass
-        else:
-            raise ocrError("not a correct img")
-        # TODO 检测是哪一个位置的御魂
+            return True
+        return False
+
+    def check_yuhun_position(self):
+        "找御魂的位置"
         check_group = [
             ((755, 199), (255, 236, 115), 1),
             ((741, 231), (255, 240, 114), 2),
@@ -94,7 +95,6 @@ class OCR:
             if self.check_rgb(self.pix[coordinate], pattern):
                 self.position = position
                 break
-        return True
     
     def get_name_img(self):
         return self.image.crop(self.name_rect)
@@ -113,15 +113,22 @@ class OCR:
 
     @staticmethod
     def check_rgb(sample, pattern, offset=5):
-        r1, g1, b1 = sample
-        r2, g2, b2 = pattern
-        if (abs(r1 - r2) <= offset) and (abs(g1 - g2) <= offset) and (abs(b1 - b2) <= offset):
-            return True
-        return False
+        for s, p in zip(sample, pattern):
+            if abs(s - p) > offset:
+                return False
+        return True
+    
+    @staticmethod
+    def img_init(img):
+        pix = img.load()
+        for x in range(img.size[0]):
+            for y in range(img.size[1]):
+                pix[x, y] = (255, 255, 255) if pix[x, y] == (203, 181, 156) else (0, 0, 0)
 
 
 def main():
     "测试模块"
+    from time import time
     # 获取yys句柄
     yys = yysWindow()
     hw = yys.get_yys_handle()
@@ -130,10 +137,14 @@ def main():
     img = yys.snap_shot()
     # 移交ocr处理文字
     ocr = OCR(img)
-    status = ocr.ocr_text(ocr.get_status_img())
+    new_img = ocr.get_status_img()
+    ocr.img_init(new_img)
+    new_img.show()
+    status = ocr.ocr_text(new_img)
     print(ocr.position)
     print(status)
-    
+    # file_num = round(time())
+    # ocr.get_extra_img().save("extra_"+str(file_num)+".bmp")
 
 if __name__ == '__main__':
     main()
