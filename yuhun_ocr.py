@@ -128,7 +128,7 @@ class OCR:
 
 def main():
     "测试模块"
-    from time import time
+    # from time import time
     # 获取yys句柄
     yys = yysWindow()
     hw = yys.get_yys_handle()
