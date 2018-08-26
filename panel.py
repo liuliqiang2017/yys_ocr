@@ -27,7 +27,7 @@ class mainWindow(QMainWindow, Ui_yuhun_ocr):
         self.set_trigger()
         # 一些存储用的变量
         self.yys = None
-        self.yuhun_data = [[], [], [], [], [], []]
+        self.yuhun_data = [[], [], [], [], [], [], []]
         # 完成信息
         self.show_message("系统初始化完成")
         # 查找yys窗口，设置缩放
@@ -64,11 +64,47 @@ class mainWindow(QMainWindow, Ui_yuhun_ocr):
         # 获取游戏界面截图
         ocr = OCR(self.yys.snap_shot())
         # 识别御魂属性
+        yuhun_name = self.yuhun_select.currentText()
+        yuhun_position = self.position_select.currentIndex()
+        if yuhun_position == 0:
+            yuhun_position = ocr.position
+        self.show_message("-" * 10)
         self.show_message("御魂识别:")
+        self.show_message("{}号位{}".format(yuhun_position, yuhun_name))
         yuhun_status = ocr.parse_status_data(ocr.get_status_text())
         for name, num in zip(*yuhun_status):
             self.show_message(name + ":" + num)
+        self.show_message("-" * 10)
+        # 生成御魂数据，入库
+        yh = self.create_yuhun(yuhun_name, yuhun_position, yuhun_status)
+        self.yuhun_data[yh[1]].append(yh)
 
+    def create_yuhun(self, name, position, status):
+        """
+        存储御魂数据，御魂数据由列表构成，按顺序为种类，位置，攻击，攻击加成，防御，防御加成，生命，生命加成
+        ，暴击，暴击伤害，速度，效果命中，效果抵抗，共计 13位
+        """
+        pattern = [None, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        RATIO = 10 ** self.amplify_ratio.currentIndex()
+        COUPLE = {"攻击": 2, "攻击加成": 3, "防御": 4, "防御加成": 5, "生命": 6, "生命加成": 7, 
+                    "暴击": 8, "暴击伤害": 9, "速度": 10, "效果命中": 11, "效果抵抗": 12}
+        
+        # 属性录入
+        for name, num in zip(*status):
+            if name in COUPLE:
+                ratio = RATIO
+                if num.endswith("%"):
+                    ratio *= 100
+                    num = num[:-1]
+                real_num = int(num) / ratio
+                pattern[COUPLE[name]] += real_num
+        
+        # 名称，位置录入
+        pattern[0] = name
+        pattern[1] = position
+
+        return pattern
+        
 
     def show_message(self, msg):
         self.textBrowser.append(msg)

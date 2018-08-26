@@ -94,7 +94,7 @@ class OCR:
         for coordinate, pattern, position in check_group:
             if self.check_rgb(self.pix[coordinate], pattern):
                 self.position = position
-                break
+                return self.position
     
     def get_name_img(self):
         return self.image.crop(self.name_rect)
