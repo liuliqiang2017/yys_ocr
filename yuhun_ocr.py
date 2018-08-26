@@ -45,12 +45,12 @@ class yysWindow:
         if not self.handle:
             self.get_yys_handle()
         # 检查当前yys分辨率
-        x1, y1, x2, y2 = self.get_window_rect()
+        x1, _, x2, _ = self.get_window_rect()
         # 调整分辨率，如有必要
         if (x2 - x1) != 1533:
             self.adjust_yys_resolution()
         # 用PIL进行截图
-        return ImageGrab.grab(bbox=(x1, y1, x2, y2))
+        return ImageGrab.grab(bbox=self.get_window_rect())
 
 class OCR:
 
@@ -72,7 +72,7 @@ class OCR:
 
     
     def ocr_text(self, img):
-        return image_to_text(img, lang="yys")
+        return image_to_text(img, lang="yys", psm=6)
     
     def is_yuhun_exist(self):
         if self.check_rgb(self.pix[845, 245], (239, 110, 25)) \
@@ -99,9 +99,46 @@ class OCR:
     def get_name_img(self):
         return self.image.crop(self.name_rect)
     
+    def get_name_text(self):
+        pass
+    
     def get_status_img(self):
         return self.image.crop(self.status_rect)
     
+    def get_status_text(self):
+        raw = self.ocr_text(self.get_status_img())
+        return self.parse_raw_text(raw)
+
+    def parse_raw_text(self, raw):
+        res = []
+        for char in raw:
+            if char == " ": continue
+            if char == "中" and res[-1] != "命": char = "+"
+            res.append(char)
+        return "".join(res)
+    
+    def parse_status_data(self, string):
+
+        def put_in(res, temp):
+            if temp:
+                res.append("".join(temp))
+                temp.clear()
+    
+        name = []
+        number = []
+        name_temp = []
+        number_temp = []
+        num_pattern = "0123456789%"
+        for char in string:
+            if char == "\n" or char == "+":
+                put_in(name, name_temp)
+                put_in(number, number_temp)
+            elif char in num_pattern:
+                number_temp.append(char)
+            else:
+                name_temp.append(char)
+        return name, number
+
     def get_extra_img(self):
         return self.image.crop(self.extra_rect)
 
@@ -137,10 +174,10 @@ def main():
     img = yys.snap_shot()
     # 移交ocr处理文字
     ocr = OCR(img)
-    new_img = ocr.get_status_img()
-    ocr.img_init(new_img)
-    new_img.show()
-    status = ocr.ocr_text(new_img)
+    # new_img = ocr.get_status_img()
+    # ocr.img_init(new_img)
+    # new_img.show()
+    status = ocr.get_status_text()
     print(ocr.position)
     print(status)
     # file_num = round(time())
