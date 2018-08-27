@@ -66,7 +66,10 @@ class mainWindow(QtWidgets.QMainWindow, Ui_yuhun_ocr):
             self.search_yys()
         if not self.yys: return
         # 获取游戏界面截图,并根据系统不同，采用不同的ocr装载
-        ocr = OCR(self.yys.snap_shot()) if self.system == "10" else OCR_win7(self.yys.snap_shot())
+        try:
+            ocr = OCR(self.yys.snap_shot()) if self.system == "10" else OCR_win7(self.yys.snap_shot())
+        except ocrError:
+            self.show_message("识别失败，请确认正确显示御魂信息")
         # 识别御魂属性
         yuhun_name = self.yuhun_select.currentText()
         yuhun_position = self.position_select.currentIndex()
@@ -208,8 +211,7 @@ class showTable(QtWidgets.QDialog, Ui_showtable):
     def save_table(self):
         pass
 
-
-if __name__ == "__main__":
+def main():
     import sys
     import cgitb
     cgitb.enable(format='text')
@@ -218,3 +220,7 @@ if __name__ == "__main__":
     widget.show()
     run = app.exec_()
     sys.exit(run)
+
+
+if __name__ == "__main__":
+    main()
