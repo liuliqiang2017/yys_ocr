@@ -50,9 +50,9 @@ class yysWindow:
         if not self.handle:
             self.get_yys_handle()
         # 检查当前yys分辨率
-        x1, _, x2, _ = self.get_window_rect()
+        _, y1, _, y2 = self.get_window_rect()
         # 调整分辨率，如有必要
-        if (x2 - x1) != 1533:
+        if (y2 - y1) != 901:
             self.adjust_yys_resolution()
         # 用PIL进行截图
         return ImageGrab.grab(bbox=self.get_window_rect())
