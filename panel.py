@@ -53,6 +53,7 @@ class mainWindow(QMainWindow, Ui_yuhun_ocr):
         self.bt_1.clicked.connect(self.load_data_from_json)
         self.bt_2.clicked.connect(self.save_data_to_json)
         self.bt_3.clicked.connect(self.search_yys)
+        self.bt_4.clicked.connect(self.yys.release_yys_topmost)
         self.ocr_bt.clicked.connect(self.ocr_yuhun)
         self.inquire_bt.clicked.connect(self.show_yuhun_table)
 
