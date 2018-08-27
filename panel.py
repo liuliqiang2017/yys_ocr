@@ -196,7 +196,7 @@ class showTable(QtWidgets.QDialog, Ui_showtable):
             self.add_new_line(yuhun)
 
     def set_trigger(self):
-        self.insert_bt.clicked.connect(self.add_new_line)
+        # self.insert_bt.clicked.connect(self.add_new_line)
         self.modify_bt.clicked.connect(self.save_table)
         self.back_bt.clicked.connect(self.reject)
 

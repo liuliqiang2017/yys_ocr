@@ -11,7 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_showtable(object):
     def setupUi(self, showtable):
         showtable.setObjectName("showtable")
-        showtable.resize(703, 582)
+        showtable.resize(1000, 500)
         self.verticalLayout = QtWidgets.QVBoxLayout(showtable)
         self.verticalLayout.setContentsMargins(5, 5, 5, 5)
         self.verticalLayout.setSpacing(5)
