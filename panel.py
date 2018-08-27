@@ -5,6 +5,7 @@
 # @Last Modified time: 2018-08-26 17:20:06
 "test ui"
 import json
+import platform
 
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
@@ -12,7 +13,7 @@ from PyQt5.QtWidgets import *
 from mainwindow import Ui_yuhun_ocr
 from showtable import Ui_showtable
 
-from yuhun_ocr import OCR, yysWindow, ocrError
+from yuhun_ocr import OCR, OCR_win7, yysWindow, ocrError
 
 
 class mainWindow(QMainWindow, Ui_yuhun_ocr):
@@ -28,8 +29,11 @@ class mainWindow(QMainWindow, Ui_yuhun_ocr):
         # 一些存储用的变量
         self.yys = None
         self.yuhun_data = [[], [], [], [], [], [], []]
+        # 检验系统版本
+        self.system = platform.uname().release
         # 完成信息
         self.show_message("系统初始化完成")
+        self.show_message("系统版本为：windows-{}".format(self.system))
         # 查找yys窗口，设置缩放
         self.search_yys()
 
@@ -61,8 +65,8 @@ class mainWindow(QMainWindow, Ui_yuhun_ocr):
         if not self.yys:
             self.search_yys()
         if not self.yys: return
-        # 获取游戏界面截图
-        ocr = OCR(self.yys.snap_shot())
+        # 获取游戏界面截图,并根据系统不同，采用不同的ocr装载
+        ocr = OCR(self.yys.snap_shot()) if self.system == "10" else OCR_win7(self.yys.snap_shot())
         # 识别御魂属性
         yuhun_name = self.yuhun_select.currentText()
         yuhun_position = self.position_select.currentIndex()
