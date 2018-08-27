@@ -22,7 +22,7 @@ class Ui_showtable(object):
         self.verticalLayout_2.setContentsMargins(5, 5, 5, 5)
         self.verticalLayout_2.setSpacing(5)
         self.verticalLayout_2.setObjectName("verticalLayout_2")
-        self.tableView = QtWidgets.QTableView(self.widget)
+        self.tableView = QtWidgets.QTableWidget(self.widget)
         self.tableView.setBaseSize(QtCore.QSize(0, 0))
         self.tableView.setInputMethodHints(QtCore.Qt.ImhNone)
         self.tableView.setObjectName("tableView")

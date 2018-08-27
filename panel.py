@@ -7,8 +7,7 @@
 import json
 import platform
 
-from PyQt5.QtCore import *
-from PyQt5.QtWidgets import *
+from PyQt5 import QtWidgets, QtCore
 
 from mainwindow import Ui_yuhun_ocr
 from showtable import Ui_showtable
@@ -16,7 +15,7 @@ from showtable import Ui_showtable
 from yuhun_ocr import OCR, OCR_win7, yysWindow, ocrError
 
 
-class mainWindow(QMainWindow, Ui_yuhun_ocr):
+class mainWindow(QtWidgets.QMainWindow, Ui_yuhun_ocr):
 
     def __init__(self):
         super().__init__(None)
@@ -28,7 +27,7 @@ class mainWindow(QMainWindow, Ui_yuhun_ocr):
         self.set_trigger()
         # 一些存储用的变量
         self.yys = None
-        self.yuhun_data = [[], [], [], [], [], [], []]
+        self.yuhun_data = []
         # 检验系统版本
         self.system = platform.uname().release
         # 完成信息
@@ -53,7 +52,7 @@ class mainWindow(QMainWindow, Ui_yuhun_ocr):
         self.bt_1.clicked.connect(self.load_data_from_json)
         self.bt_2.clicked.connect(self.save_data_to_json)
         self.bt_3.clicked.connect(self.search_yys)
-        self.bt_4.clicked.connect(self.yys.release_yys_topmost)
+        self.bt_4.clicked.connect(self.release_yys)
         self.ocr_bt.clicked.connect(self.ocr_yuhun)
         self.inquire_bt.clicked.connect(self.show_yuhun_table)
 
@@ -82,7 +81,7 @@ class mainWindow(QMainWindow, Ui_yuhun_ocr):
         self.show_message("-" * 10)
         # 生成御魂数据，入库
         yh = self.create_yuhun(yuhun_name, yuhun_position, yuhun_status)
-        self.yuhun_data[yh[1]].append(yh)
+        self.yuhun_data.append(yh)
 
     def create_yuhun(self, yh_name, yh_position, yh_status):
         """
@@ -118,7 +117,7 @@ class mainWindow(QMainWindow, Ui_yuhun_ocr):
         "把所有yuhun的data数据保存到json文件"
 
         # 弹出窗口要求用户选择存储位置
-        fileName = QFileDialog.getSaveFileName(None,
+        fileName = QtWidgets.QFileDialog.getSaveFileName(None,
                                              r'保存御魂信息',
                                              r'yuhun_data',
                                              r'JSON Files(*.json)')
@@ -131,7 +130,7 @@ class mainWindow(QMainWindow, Ui_yuhun_ocr):
     def load_data_from_json(self):
         "读取数据"
         # 弹出窗口要求用户选择文件
-        fileName = QFileDialog.getOpenFileName(None,
+        fileName = QtWidgets.QFileDialog.getOpenFileName(None,
                                              r'创建御魂信息并保存',
                                              r'yuhun_data',
                                              r'JSON Files(*.json)')
@@ -142,7 +141,7 @@ class mainWindow(QMainWindow, Ui_yuhun_ocr):
                 self.show_message("读取御魂信息失败，数据损坏")
                 return
 
-        if len(data) == 6:
+        if isinstance(data, list) and len(data[0]) == 13:
             # 读取json，覆盖本身的data
             self.yuhun_data = data
             self.show_message("读取御魂信息成功")
@@ -156,30 +155,55 @@ class mainWindow(QMainWindow, Ui_yuhun_ocr):
             self.show_message("找到阴阳师窗口\n设置分辨率为1533x900\n设置阴阳师窗口置顶")
         except ocrError:
             self.show_message("未找到阴阳师窗口")
+    
+    def release_yys(self):
+        if self.yys:
+            self.yys.release_yys_topmost()
 
 
-class showTable(QDialog, Ui_showtable):
+class showTable(QtWidgets.QDialog, Ui_showtable):
 
     def __init__(self, parent):
         super().__init__(parent)
         self.parent = parent
         super().setupUi(self)
+        # 初始化表格
+        self.init_table()
         # 设置触发
         self.set_trigger()
         # 加载表格
         self.load_table()
         self.show()
 
+    def init_table(self):
+        # 表头
+        header = ["类别", "位置", "攻击", "攻击加成", "防御", "防御加成", "生命", "生命加成",
+        "暴击", "暴击伤害", "速度", "效果命中", "效果抵抗"]
+        self.tableView.setColumnCount(13)
+        self.tableView.setRowCount(0)
+        self.tableView.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        for i, name in enumerate(header):
+            item = QtWidgets.QTableWidgetItem()
+            item.setText(name)
+            self.tableView.setHorizontalHeaderItem(i, item)
+        self.tableView.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+
     def load_table(self):
-        pass
+        for yuhun in self.parent.yuhun_data:
+            self.add_new_line(yuhun)
 
     def set_trigger(self):
         self.insert_bt.clicked.connect(self.add_new_line)
         self.modify_bt.clicked.connect(self.save_table)
         self.back_bt.clicked.connect(self.reject)
 
-    def add_new_line(self):
-        pass
+    def add_new_line(self, yh_data):
+        row = self.tableView.rowCount()
+        self.tableView.setRowCount(row + 1)
+        for col, data in enumerate(yh_data):
+            newItem = QtWidgets.QTableWidgetItem(str(data))
+            newItem.setTextAlignment(QtCore.Qt.AlignCenter)
+            self.tableView.setItem(row, col, newItem)
 
     def save_table(self):
         pass
@@ -189,7 +213,8 @@ if __name__ == "__main__":
     import sys
     import cgitb
     cgitb.enable(format='text')
-    app = QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     widget = mainWindow()
     widget.show()
-    sys.exit(app.exec_())
+    run = app.exec_()
+    sys.exit(run)
