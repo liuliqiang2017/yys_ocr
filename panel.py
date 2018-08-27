@@ -41,7 +41,7 @@ class mainWindow(QtWidgets.QMainWindow, Ui_yuhun_ocr):
         self.yuhun_select.addItems(option)
 
     def set_position_cb(self):
-        option = ["自动识别", "1号位", "2号位", "3号位", "4号位", "5号位", "6号位"]
+        option = ["选择位置", "1号位", "2号位", "3号位", "4号位", "5号位", "6号位"]
         self.position_select.addItems(option)
     
     def set_amplify_cb(self):
@@ -75,10 +75,13 @@ class mainWindow(QtWidgets.QMainWindow, Ui_yuhun_ocr):
         yuhun_position = self.position_select.currentIndex()
         if yuhun_position == 0:
             yuhun_position = ocr.position
+        try:
+            yuhun_status = ocr.parse_status_data(ocr.get_status_text())
+        except ocrError:
+            return self.show_message("识别失败，请确认正确显示御魂信息")
         self.show_message("-" * 10)
         self.show_message("御魂识别:")
         self.show_message("{}号位{}".format(yuhun_position, yuhun_name))
-        yuhun_status = ocr.parse_status_data(ocr.get_status_text())
         for name, num in zip(*yuhun_status):
             self.show_message(name + ":" + num)
         self.show_message("-" * 10)

@@ -83,28 +83,32 @@ class OCR:
         self.pix = img.load()
         self.path = getcwd()
         self.position = 0
-        self.calculate_rect()
+        self.status_rect = (740, 283, 1105, 475)
 
-    def calculate_rect(self):
-        if self.is_yuhun_exist():
-            self.check_yuhun_position()
-            bottom_y = self.get_status_bottom()
-            if not bottom_y:
-                raise ocrError("cannot find yuhun status bottom line")
-            self.status_rect = (*self.status_rect_data, bottom_y - 3)
-            self.extra_rect = (self.status_rect_data[0], bottom_y + 8, self.status_rect_data[2], bottom_y + 48)
-        else:
-            raise ocrError("cannot find yuhun status pic")
-
+    # def calculate_rect(self):
+    #     if self.is_yuhun_exist():
+    #         self.check_yuhun_position()
+    #         bottom_y = self.get_status_bottom()
+    #         if not bottom_y:
+    #             raise ocrError("cannot find yuhun status bottom line")
+    #         self.status_rect = (*self.status_rect_data, bottom_y - 3)
+    #         self.extra_rect = (self.status_rect_data[0], bottom_y + 8, self.status_rect_data[2], bottom_y + 48)
+    #     else:
+    #         raise ocrError("cannot find yuhun status pic")
     
     def ocr_text(self, img):
         return image_to_text(img, lang="yys", psm=6, path=self.path)
     
+    # def is_yuhun_exist(self):
+    #     for coordinate, pattern in self.check_yuhun:
+    #         if not self.check_rgb(self.pix[coordinate], pattern):
+    #             return False
+    #     return True
+
     def is_yuhun_exist(self):
-        for coordinate, pattern in self.check_yuhun:
-            if not self.check_rgb(self.pix[coordinate], pattern):
-                return False
-        return True
+        if self.check_rgb(self.pix[885, 375], (203, 181, 156), offset=0):
+            return True
+        return False
 
     def check_yuhun_position(self):
         "找御魂的位置"
@@ -154,10 +158,13 @@ class OCR:
                 number_temp.append(char)
             else:
                 name_temp.append(char)
-        return name, number
+        if (name and number) and (len(name) == len(number)):
+            return name, number
+        else:
+            raise ocrError("not correct data")
 
-    def get_extra_img(self):
-        return self.image.crop(self.extra_rect)
+    # def get_extra_img(self):
+    #     return self.image.crop(self.extra_rect)
 
     def get_status_bottom(self):
         # 从横坐标900，纵坐标500，垂直向上找色(176, 138, 120)
