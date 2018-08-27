@@ -83,7 +83,7 @@ class mainWindow(QMainWindow, Ui_yuhun_ocr):
         yh = self.create_yuhun(yuhun_name, yuhun_position, yuhun_status)
         self.yuhun_data[yh[1]].append(yh)
 
-    def create_yuhun(self, name, position, status):
+    def create_yuhun(self, yh_name, yh_position, yh_status):
         """
         存储御魂数据，御魂数据由列表构成，按顺序为种类，位置，攻击，攻击加成，防御，防御加成，生命，生命加成
         ，暴击，暴击伤害，速度，效果命中，效果抵抗，共计 13位
@@ -94,7 +94,7 @@ class mainWindow(QMainWindow, Ui_yuhun_ocr):
                     "暴击": 8, "暴击伤害": 9, "速度": 10, "效果命中": 11, "效果抵抗": 12}
         
         # 属性录入
-        for name, num in zip(*status):
+        for name, num in zip(*yh_status):
             if name in COUPLE:
                 ratio = RATIO
                 if num.endswith("%"):
@@ -104,8 +104,8 @@ class mainWindow(QMainWindow, Ui_yuhun_ocr):
                 pattern[COUPLE[name]] += real_num
         
         # 名称，位置录入
-        pattern[0] = name
-        pattern[1] = position
+        pattern[0] = yh_name
+        pattern[1] = yh_position
 
         return pattern
         
