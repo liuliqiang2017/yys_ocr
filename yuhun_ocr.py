@@ -76,25 +76,25 @@ class OCR:
 
     name_rect = (828, 192, 982, 233)
     bottom_line_rgb = (177, 140, 120)
-    status_rect_data = (740, 290, 1095)
+    status_rect_data = (740, 283, 1105)
 
     def __init__(self, img):
         self.image = img
         self.pix = img.load()
         self.path = getcwd()
         self.position = 0
-        self.status_rect = (740, 283, 1105, 475)
+        self.calculate_rect()
 
-    # def calculate_rect(self):
-    #     if self.is_yuhun_exist():
-    #         self.check_yuhun_position()
-    #         bottom_y = self.get_status_bottom()
-    #         if not bottom_y:
-    #             raise ocrError("cannot find yuhun status bottom line")
-    #         self.status_rect = (*self.status_rect_data, bottom_y - 3)
-    #         self.extra_rect = (self.status_rect_data[0], bottom_y + 8, self.status_rect_data[2], bottom_y + 48)
-    #     else:
-    #         raise ocrError("cannot find yuhun status pic")
+    def calculate_rect(self):
+        if self.is_yuhun_exist():
+            # self.check_yuhun_position()
+            bottom_y = self.get_status_bottom()
+            if not bottom_y:
+                raise ocrError("cannot find yuhun status bottom line")
+            self.status_rect = (*self.status_rect_data, bottom_y - 3)
+            self.extra_rect = (self.status_rect_data[0], bottom_y + 8, self.status_rect_data[2], bottom_y + 48)
+        else:
+            raise ocrError("cannot find yuhun status pic")
     
     def ocr_text(self, img):
         return image_to_text(img, lang="yys", psm=6, path=self.path)
@@ -106,9 +106,10 @@ class OCR:
     #     return True
 
     def is_yuhun_exist(self):
-        if self.check_rgb(self.pix[885, 375], (203, 181, 156), offset=0):
-            return True
-        return False
+        # if self.check_rgb(self.pix[885, 375], (203, 181, 156), offset=0):
+        #     return True
+        # return False
+        return True
 
     def check_yuhun_position(self):
         "找御魂的位置"
