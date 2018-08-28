@@ -30,12 +30,12 @@ def check_rgb(sample, pattern, offset=5):
     return True
 
 # 多点找色
-def find_mul_colors(pattern, x1, y1, x2, y2, others, pix_data, mode_h, mode_v):
+def find_mul_colors(pattern, x1, y1, x2, y2, others, pix_data, mode=(0, 0)):
     """
     多点找色，根据xx助手的数据开发
     """
-    enum_hor = range(x1, x2+1) if mode_h == 0 else range(x2, x1-1, -1)
-    enum_ver = range(y1, y2+1) if mode_v == 0 else range(y2, y1-1, -1)
+    enum_hor = range(x1, x2+1) if mode[0] == 0 else range(x2, x1-1, -1)
+    enum_ver = range(y1, y2+1) if mode[1] == 0 else range(y2, y1-1, -1)
 
     for x in enum_hor:
         for y in enum_ver:

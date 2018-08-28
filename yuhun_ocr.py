@@ -7,6 +7,8 @@ from win32con import HWND_TOPMOST, HWND_TOP, SWP_DEFERERASE, SWP_NOREPOSITION
 from PIL import ImageGrab
 from tesserocr import image_to_text
 
+from findcolor import translate, find_mul_colors
+
 class ocrError(Exception):
     pass
 
@@ -59,25 +61,6 @@ class yysWindow:
 
 class OCR:
 
-    check_position = [
-            ((755, 199), (255, 236, 115), 1),
-            ((741, 231), (255, 240, 114), 2),
-            ((755, 263), (255, 235, 112), 3),
-            ((820, 263), (255, 237, 112), 4),
-            ((834, 231), (255, 240, 115), 5),
-            ((820, 199), (255, 237, 112), 6),
-            ]
-    
-    check_yuhun = [
-        ((845, 245), (239, 110, 25)),
-        ((845, 240), (113, 82, 68)),
-        ((860, 245), (228, 86, 34))
-    ]
-
-    name_rect = (828, 192, 982, 233)
-    bottom_line_rgb = (177, 140, 120)
-    status_rect_data = (740, 283, 1105)
-
     def __init__(self, img):
         self.image = img
         self.pix = img.load()
@@ -87,36 +70,42 @@ class OCR:
 
     def calculate_rect(self):
         if self.is_yuhun_exist():
-            # self.check_yuhun_position()
-            bottom_y = self.get_status_bottom()
-            if not bottom_y:
-                raise ocrError("cannot find yuhun status bottom line")
-            self.status_rect = (*self.status_rect_data, bottom_y - 3)
-            self.extra_rect = (self.status_rect_data[0], bottom_y + 8, self.status_rect_data[2], bottom_y + 48)
+            self.status_rect = self.cal_status_rect()
+            self.extra_rect = self.cal_extra_rect()
+            self.name_rect = self.cal_name_rect()
+            self.check_yuhun_position()
         else:
             raise ocrError("cannot find yuhun status pic")
     
-    def ocr_text(self, img):
-        return image_to_text(img, lang="yys", psm=6, path=self.path)
+    def cal_name_rect(self):
+        x, y = find_mul_colors(pix_data=self.pix, **FindColorCode.gouyu)
+        return  x - 16, y - 46, x + 123, y - 10
     
-    # def is_yuhun_exist(self):
-    #     for coordinate, pattern in self.check_yuhun:
-    #         if not self.check_rgb(self.pix[coordinate], pattern):
-    #             return False
-    #     return True
-
-    def is_yuhun_exist(self):
-        # if self.check_rgb(self.pix[885, 375], (203, 181, 156), offset=0):
-        #     return True
-        # return False
-        return True
-
+    def cal_status_rect(self):
+        # 计算四个边的坐标
+        x1, _ = find_mul_colors(pix_data=self.pix, **FindColorCode.status_left, mode=(1, 0))
+        x2, _ = find_mul_colors(pix_data=self.pix, **FindColorCode.status_right)
+        _, y1 = find_mul_colors(pix_data=self.pix, **FindColorCode.status_up, mode=(0, 1))
+        _, y2 = find_mul_colors(pix_data=self.pix, **FindColorCode.status_down)
+        return x1, y1, x2, y2
+    
+    def cal_extra_rect(self):
+        return self.status_rect[0], self.status_rect[3], self.status_rect[2], self.status_rect[3] + 48
+    
     def check_yuhun_position(self):
         "找御魂的位置"
-        for coordinate, pattern, position in self.check_position:
-            if self.check_rgb(self.pix[coordinate], pattern):
-                self.position = position
-                return self.position
+        for i, code in enumerate(FindColorCode.position, 1):
+            if find_mul_colors(pix_data=self.pix, **code)[0] > -1:
+                self.position = i
+                return
+    
+    def ocr_text(self, img):
+        return image_to_text(img, lang="yys", psm=6, path=self.path)
+
+    def is_yuhun_exist(self):
+        x, _ = find_mul_colors(pix_data=self.pix, **FindColorCode.exist_code)
+        return True if x > -1 else False
+
     
     def get_name_img(self):
         return self.image.crop(self.name_rect)
@@ -164,14 +153,9 @@ class OCR:
         else:
             raise ocrError("not correct data")
 
-    # def get_extra_img(self):
-    #     return self.image.crop(self.extra_rect)
+    def get_extra_img(self):
+        return self.image.crop(self.extra_rect)
 
-    def get_status_bottom(self):
-        # 从横坐标900，纵坐标500，垂直向上找色(176, 138, 120)
-        for y in range(500, 290, -1):
-            if self.check_rgb(self.pix[900, y], self.bottom_line_rgb):
-                return y
 
     @staticmethod
     def check_rgb(sample, pattern, offset=5):
@@ -179,35 +163,23 @@ class OCR:
             if abs(s - p) > offset:
                 return False
         return True
-    
-    # @staticmethod
-    # def img_init(img):
-    #     pix = img.load()
-    #     for x in range(img.size[0]):
-    #         for y in range(img.size[1]):
-    #             pix[x, y] = (255, 255, 255) if pix[x, y] == (203, 181, 156) else (0, 0, 0)
 
-class OCR_win7(OCR):
+class FindColorCode:
 
-    check_position = [
-            ((756, 195), (255, 240, 115), 1),
-            ((742, 228), (255, 240, 114), 2),
-            ((756, 261), (255, 240, 115), 3),
-            ((822, 261), (255, 240, 114), 4),
-            ((836, 228), (255, 240, 115), 5),
-            ((822, 195), (255, 240, 114), 6),
-            ]
-    
-    check_yuhun = [
-        ((845, 245), (237, 88, 27)),
-        ((846, 238), (97, 86, 81)),
-        ((860, 240), (216, 67, 61))
+    exist_code = translate('0xcbb59c,"-2|-15|0xcbb59c,-1|-33|0xcbb59c", 95, 871, 348, 900, 382')
+    status_left = translate('0x6a523e,"-1|0|0x412711,-2|0|0x533a1b,8|3|0xc6b097", 95, 678, 373, 791, 418')
+    status_right = translate('0x78614c,"1|0|0x3e240f,2|0|0x50371a,-11|-1|0xcbb59c", 95, 1046, 353, 1183, 397')
+    status_up = translate('0xb6937f,"4|-3|0xaf8977,4|-5|0xbb9b86,6|-6|0xcbb59c", 95, 902, 257, 927, 303')
+    status_down = translate('0xba9b86,"1|2|0xb08a77,5|5|0xb69480,8|6|0xcbb59c", 95, 899, 316, 959, 503')
+    position = [
+        translate('0x21130d,"2|2|0xfffb7c,-2|-2|0xff9449,4|4|0xfff173", 95, 742, 172, 769, 199'),
+        translate('0x1f110e,"-3|0|0xff833a,4|0|0xfff979", 95, 725, 166, 859, 284'),
+        translate('0x130a09,"2|-2|0xfffb7c,-2|2|0xff9249", 95, 725, 166, 859, 284'),
+        translate('0x25160e,"-2|-2|0xfffb7c,2|2|0xffa358", 95, 725, 166, 859, 284'),
+        translate('0x190e0c,"-3|0|0xfffb7c,3|0|0xff9047", 95, 725, 166, 859, 284'),
+        translate('0x26160e,"-2|2|0xfffb7c,2|-2|0xff9f54", 95, 725, 166, 859, 284')
     ]
-
-    name_rect = (830, 191, 973, 229)
-    bottom_line_rgb = (179, 143, 124)
-    status_rect_data = (738, 286, 1095)
-
+    gouyu = translate('0x8d7d71,"-3|3|0xdd4a27,3|3|0xf36739,0|-4|0xff5f4e", 95, 822, 216, 965, 265')
 
 def main():
     "测试模块"

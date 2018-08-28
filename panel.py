@@ -12,7 +12,7 @@ from PyQt5 import QtWidgets, QtCore
 from mainwindow import Ui_yuhun_ocr
 from showtable import Ui_showtable
 
-from yuhun_ocr import OCR, OCR_win7, yysWindow, ocrError
+from yuhun_ocr import OCR, yysWindow, ocrError
 
 
 class mainWindow(QtWidgets.QMainWindow, Ui_yuhun_ocr):
@@ -67,9 +67,9 @@ class mainWindow(QtWidgets.QMainWindow, Ui_yuhun_ocr):
         if not self.yys: return
         # 获取游戏界面截图,并根据系统不同，采用不同的ocr装载
         try:
-            ocr = OCR(self.yys.snap_shot()) if self.system == "10" else OCR_win7(self.yys.snap_shot())
+            ocr = OCR(self.yys.snap_shot())
         except ocrError:
-            self.show_message("识别失败，请确认正确显示御魂信息")
+            return self.show_message("识别失败，请确认正确显示御魂信息")
         # 识别御魂属性
         yuhun_name = self.yuhun_select.currentText()
         yuhun_position = self.position_select.currentIndex()
@@ -78,7 +78,7 @@ class mainWindow(QtWidgets.QMainWindow, Ui_yuhun_ocr):
         try:
             yuhun_status = ocr.parse_status_data(ocr.get_status_text())
         except ocrError:
-            return self.show_message("识别失败，请确认正确显示御魂信息")
+            return self.show_message("识别失败，无法识别御魂信息")
         self.show_message("-" * 10)
         self.show_message("御魂识别:")
         self.show_message("{}号位{}".format(yuhun_position, yuhun_name))
