@@ -87,7 +87,10 @@ class OCR:
         x2, _ = find_mul_colors(pix_data=self.pix, **FindColorCode.status_right)
         _, y1 = find_mul_colors(pix_data=self.pix, **FindColorCode.status_up, mode=(0, 1))
         _, y2 = find_mul_colors(pix_data=self.pix, **FindColorCode.status_down)
-        return x1, y1, x2, y2
+        
+        if x1 > -1 and x2 > -1 and y1 > -1 and y2 > -1:
+            return x1, y1, x2, y2
+        return 740, 283, 1100, 485
     
     def cal_extra_rect(self):
         return self.status_rect[0], self.status_rect[3], self.status_rect[2], self.status_rect[3] + 48
