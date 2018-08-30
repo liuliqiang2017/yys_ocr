@@ -43,7 +43,7 @@ class mainWindow(QtWidgets.QMainWindow, Ui_yuhun_ocr):
     def set_position_cb(self):
         option = ["选择位置", "1号位", "2号位", "3号位", "4号位", "5号位", "6号位"]
         self.position_select.addItems(option)
-    
+
     def set_amplify_cb(self):
         option = ["正常", "十倍", "百倍", "千倍", "万倍"]
         self.amplify_ratio.addItems(option)
@@ -91,30 +91,35 @@ class mainWindow(QtWidgets.QMainWindow, Ui_yuhun_ocr):
 
     def create_yuhun(self, yh_name, yh_position, yh_status):
         """
-        存储御魂数据，御魂数据由列表构成，按顺序为种类，位置，攻击，攻击加成，防御，防御加成，生命，生命加成
-        ，暴击，暴击伤害，速度，效果命中，效果抵抗，共计 13位
+        存储御魂数据，御魂数据为字典数据包括种类，位置，攻击，攻击加成，防御，
+        防御加成，生命，生命加成，暴击，暴击伤害，速度，效果命中，效果抵抗
         """
-        pattern = [None, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        data = dict()
+
         RATIO = 10 ** self.amplify_ratio.currentIndex()
-        COUPLE = {"攻击": 2, "攻击加成": 3, "防御": 4, "防御加成": 5, "生命": 6, "生命加成": 7, 
-                    "暴击": 8, "暴击伤害": 9, "速度": 10, "效果命中": 11, "效果抵抗": 12}
-        
+        PROP = [u"攻击", u"攻击加成", u"防御", u"防御加成", u"生命",
+                u"生命加成", u"暴击", u"暴击伤害", u"速度", u"效果命中",
+                u"效果抵抗"]
+
         # 属性录入
         for name, num in zip(*yh_status):
-            if name in COUPLE:
+            if name in PROP:
                 ratio = RATIO
                 if num.endswith("%"):
                     ratio *= 100
                     num = num[:-1]
                 real_num = int(num) / ratio
-                pattern[COUPLE[name]] += real_num
-        
-        # 名称，位置录入
-        pattern[0] = yh_name
-        pattern[1] = yh_position
+                if name not in data:
+                    data.setdefault(name, real_num)
+                else:
+                    data[name] += real_num
 
-        return pattern
-        
+        # 名称，位置录入
+        data[u"御魂类型"] = yh_name
+        data[u"位置"] = yh_position
+
+        return data
+
 
     def show_message(self, msg):
         self.textBrowser.append(msg)
@@ -153,7 +158,7 @@ class mainWindow(QtWidgets.QMainWindow, Ui_yuhun_ocr):
             self.show_message("读取御魂信息成功")
         else:
             self.show_message("读取御魂信息失败，数据损坏")
-    
+
     def search_yys(self):
         try:
             self.yys = yysWindow()
@@ -161,7 +166,7 @@ class mainWindow(QtWidgets.QMainWindow, Ui_yuhun_ocr):
             self.show_message("找到阴阳师窗口\n设置分辨率为1533x900\n设置阴阳师窗口置顶")
         except ocrError:
             self.show_message("未找到阴阳师窗口")
-    
+
     def release_yys(self):
         if self.yys:
             self.yys.release_yys_topmost()
